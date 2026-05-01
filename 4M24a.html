@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lux - 三大生態星系與心靈守護</title>
+    <style>
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+        font-family: sans-serif;
+        perspective: 1500px;
+      }
+      #starCanvas {
+        position: absolute;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .vignette {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, transparent 20%, #000 120%);
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      /* 太陽 */
+      #sun-core {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 25px;
+        height: 25px;
+        background: #fff;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 60px 20px #ffcc00, 0 0 120px 40px #ff6600;
+        z-index: 3;
+        animation: sunPulse 4s infinite ease-in-out;
+      }
+      @keyframes sunPulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.2);
+        }
+      }
+
+      /* 三大星球 */
+      #solar-system {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        z-index: 4;
+        pointer-events: none;
+      }
+      .orbit-planet {
+        position: absolute;
+        border-radius: 50%;
+        transform-style: preserve-3d;
+        box-shadow: inset -15px -15px 40px rgba(0, 0, 0, 0.8);
+      }
+
+      .type-forest {
+        background: radial-gradient(circle at 30% 30%, #2d5a27, #1e3a1a);
+        box-shadow: inset -15px -15px 40px rgba(0, 0, 0, 0.8),
+          0 0 20px rgba(0, 255, 0, 0.2);
+      }
+      .type-ocean {
+        background: radial-gradient(circle at 30% 30%, #1e90ff, #003366);
+        box-shadow: inset -15px -15px 40px rgba(0, 0, 0, 0.8),
+          0 0 20px rgba(0, 100, 255, 0.2);
+      }
+      .type-lava {
+        background: radial-gradient(circle at 30% 30%, #ff4500, #4b0000);
+        box-shadow: inset -15px -15px 40px rgba(0, 0, 0, 0.9), 0 0 25px #ff4500;
+      }
+
+      .planet-tag {
+        position: absolute;
+        bottom: -35px;
+        width: 100px;
+        left: calc(50% - 50px);
+        text-align: center;
+        color: white;
+        font-size: 12px;
+        letter-spacing: 1px;
+        opacity: 0.6;
+      }
+
+      /* Lux 3D */
+      #scene-3d {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        pointer-events: none;
+        z-index: 100;
+      }
+      .aurora-sprite {
+        position: absolute;
+        width: 60px;
+        height: 80px;
+        transform-style: preserve-3d;
+        pointer-events: auto;
+        transform: translate(-50%, -50%);
+      }
+      .name-label {
+        position: absolute;
+        top: -45px;
+        width: 100px;
+        left: -20px;
+        color: #fff;
+        text-align: center;
+        text-shadow: 0 0 10px var(--glow);
+        font-weight: bold;
+      }
+      .sprite-head {
+        width: 28px;
+        height: 28px;
+        background: #fff;
+        border-radius: 50%;
+        position: absolute;
+        left: 16px;
+        box-shadow: 0 0 30px #fff, 0 0 60px var(--glow, #00d4ff);
+        transform: translateZ(30px);
+      }
+      .sprite-body {
+        width: 16px;
+        height: 32px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 10px;
+        position: absolute;
+        left: 22px;
+        top: 22px;
+        transform: translateZ(15px);
+      }
+      .sprite-wing {
+        width: 30px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50% 50% 0 80%;
+        position: absolute;
+        top: 15px;
+        transform-origin: top center;
+        backdrop-filter: blur(4px);
+      }
+      .left {
+        left: 4px;
+      }
+      .right {
+        right: 4px;
+        transform: scaleX(-1);
+      }
+
+      .bubble-chat {
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 18px;
+        position: absolute;
+        left: 80px;
+        top: -30px;
+        opacity: 0;
+        transition: 0.5s;
+        min-width: 220px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        line-height: 1.5;
+        font-size: 14px;
+      }
+
+      /* UI */
+      .name-control {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 250;
+      }
+      #nameInput {
+        background: none;
+        border: none;
+        border-bottom: 1px solid #fff;
+        color: #fff;
+        outline: none;
+        padding: 5px;
+      }
+      .scene-menu {
+        position: absolute;
+        bottom: 30px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        z-index: 200;
+      }
+      button {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: 0.3s;
+        backdrop-filter: blur(5px);
+      }
+      button:hover {
+        background: #fff;
+        color: #000;
+        box-shadow: 0 0 20px #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="vignette"></div>
+    <canvas id="starCanvas"></canvas>
+    <div id="sun-core"></div>
+    <div id="solar-system"></div>
+
+    <div class="name-control">
+      <input
+        type="text"
+        id="nameInput"
+        placeholder="為你的精靈命名..."
+        maxlength="10"
+      />
+    </div>
+
+    <div id="scene-3d">
+      <div id="observer" class="aurora-sprite">
+        <div class="name-label" id="nameLabel">Lux</div>
+        <div class="sprite-halo"></div>
+        <div class="sprite-head"></div>
+        <div class="sprite-body"></div>
+        <div class="sprite-wing left"></div>
+        <div class="sprite-wing right"></div>
+        <div id="bubble" class="bubble-chat"></div>
+      </div>
+    </div>
+
+    <div class="scene-menu">
+      <button onclick="switchScene(0)">🌲 寧靜森林</button>
+      <button onclick="switchScene(1)">🔥 炙熱熔岩</button>
+      <button onclick="switchScene(2)">🌊 深海希望</button>
+    </div>
+    <script>
+      const canvas = document.getElementById('starCanvas');
+      const ctx = canvas.getContext('2d');
+      const sprite = document.getElementById('observer');
+      const bubble = document.getElementById('bubble');
+      const nameLabel = document.getElementById('nameLabel');
+
+      let particles = [],
+        stars = [],
+        planets = [];
+      let mouse = {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        down: false,
+      };
+      let pos = { x: mouse.x, y: mouse.y };
+      let sceneIdx = 0;
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+
+      const themes = [
+        {
+          color: '120, 100%, 75%',
+          quotes: [
+            '星光雖然遠，但總有一束係為你而亮。',
+            '攰就休息下，宇宙等緊你叉好電。',
+            '你唔使每一秒都發光，平凡已經好靚。',
+          ],
+        },
+        {
+          color: '15, 100%, 65%',
+          quotes: [
+            '每一次嘅破碎，都係超新星爆發前嘅重組。',
+            '黑暗只係為咗令你呢粒星鑽更顯眼。',
+            '你有重塑未來嘅力量，加油！',
+          ],
+        },
+        {
+          color: '200, 100%, 70%',
+          quotes: [
+            '流淚唔係軟弱，係靈魂喺度排毒。',
+            '迷失其實係喺度探索新嘅星系。',
+            '世界好嘈，但你可以喺自己軌道安靜運行。',
+          ],
+        },
+      ];
+
+      function init() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        particles = [];
+        stars = [];
+        planets = [];
+
+        for (let i = 0; i < 3000; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: Math.random() - 0.5,
+            vy: Math.random() - 0.5,
+            size: Math.random() * 1.2,
+          });
+        }
+
+        const solar = document.getElementById('solar-system');
+        solar.innerHTML = '';
+        const config = [
+          { type: 'type-forest', d: 220, s: 50, sp: 0.01, name: '🌲 森林之源' },
+          { type: 'type-ocean', d: 380, s: 75, sp: 0.007, name: '🌊 蔚藍深海' },
+          { type: 'type-lava', d: 550, s: 65, sp: 0.004, name: '🔥 熾熱熔岩' },
+        ];
+
+        config.forEach((c) => {
+          const p = document.createElement('div');
+          p.className = `orbit-planet ${c.type}`;
+          p.style.width = p.style.height = c.s + 'px';
+          const tag = document.createElement('div');
+          tag.className = 'planet-tag';
+          tag.innerText = c.name;
+          p.appendChild(tag);
+          solar.appendChild(p);
+          planets.push({
+            el: p,
+            dist: c.d,
+            speed: c.sp,
+            angle: Math.random() * Math.PI * 2,
+          });
+        });
+      }
+
+      function say(txt) {
+        bubble.innerText = txt;
+        bubble.style.opacity = 1;
+        clearTimeout(window.bt);
+        window.bt = setTimeout(() => (bubble.style.opacity = 0), 5000);
+      }
+
+      function switchScene(idx) {
+        sceneIdx = idx;
+        sprite.style.setProperty(
+          '--glow',
+          `hsl(${themes[idx].color.split(',')[0]}, 100%, 70%)`
+        );
+        say(
+          themes[idx].quotes[
+            Math.floor(Math.random() * themes[idx].quotes.length)
+          ]
+        );
+      }
+
+      window.onmousemove = (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+      };
+      window.onmousedown = () => (mouse.down = true);
+      window.onmouseup = () => {
+        mouse.down = false;
+        particles.forEach((p) => {
+          let dx = p.x - pos.x,
+            dy = p.y - pos.y;
+          let d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 300) {
+            p.vx += (dx / d) * 25;
+            p.vy += (dy / d) * 25;
+          }
+        });
+      };
+
+      function animate() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = `hsl(${themes[sceneIdx].color})`;
+        particles.forEach((p) => {
+          if (mouse.down) {
+            let dx = pos.x - p.x,
+              dy = pos.y - p.y;
+            let d = Math.sqrt(dx * dx + dy * dy);
+            p.vx += (dx / d) * 0.8;
+            p.vy += (dy / d) * 0.8;
+            p.vx *= 0.92;
+            p.vy *= 0.92;
+          } else {
+            p.vx *= 0.99;
+            p.vy *= 0.99;
+          }
+          p.x += p.vx;
+          p.y += p.vy;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+
+        planets.forEach((p) => {
+          p.angle += p.speed;
+          p.el.style.left = centerX + Math.cos(p.angle) * p.dist + 'px';
+          p.el.style.top = centerY + Math.sin(p.angle) * p.dist * 0.6 + 'px';
+        });
+
+        pos.x += (mouse.x - pos.x) * 0.1;
+        pos.y += (mouse.y - pos.y) * 0.1;
+        sprite.style.left = pos.x + 'px';
+        sprite.style.top = pos.y + 'px';
+        sprite.style.transform = `translate(-50%, -50%) rotateX(${
+          (mouse.y - pos.y) * 0.12
+        }deg) rotateY(${(mouse.x - pos.x) * -0.12}deg)`;
+
+        requestAnimationFrame(animate);
+      }
+
+      document.getElementById('nameInput').onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          nameLabel.innerText = e.target.value;
+          e.target.blur();
+          say('你好，' + nameLabel.innerText + '。我會陪住你。');
+        }
+      };
+
+      init();
+      animate();
+      switchScene(0);
+      window.onresize = init;
+      // 每 20 秒自動講一句安慰話
+      setInterval(() => {
+        if (bubble.style.opacity == 0)
+          say(themes[sceneIdx].quotes[Math.floor(Math.random() * 3)]);
+      }, 20000);
+    </script>
+  </body>
+</html>

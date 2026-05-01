@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NES Game Vault</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="crt-overlay"></div>
+
+    <div class="nes-container">
+      <div id="menu-view">
+        <header>
+          <h1 class="glow-title">選擇遊戲</h1>
+          <div class="insert-coin">PLEASE INSERT COIN _</div>
+          <div class="line-divider"></div>
+        </header>
+        <main id="game-grid" class="game-grid"></main>
+      </div>
+
+      <div id="game-view" style="display: none">
+        <header>
+          <button class="retro-btn" onclick="closeGame()">◀ BACK</button>
+        </header>
+        <iframe id="game-frame" src="" frameborder="0"></iframe>
+      </div>
+    </div>
+
+    <script>
+      async function loadGames() {
+        const grid = document.getElementById('game-grid');
+
+        try {
+          const response = await fetch('games.json');
+          const games = await response.json();
+
+          grid.innerHTML = games
+            .sort((a, b) => 0.5 - Math.random())
+            .filter((x, i) => i < 8)
+            .map(
+              (game) => `
+                <a href="${game.code}.html" class="game-card" onclick="openGame(event, '${game.code}.html')">
+                    <div class="thumbnail-wrapper">
+                        <img src="${game.code}.jpg" alt="${game.title}">
+                    </div>
+                    <div class="game-title">${game.title}</div>
+                </a>
+            `
+            )
+            .join('');
+        } catch (error) {
+          console.error('Error loading the game list:', error);
+          grid.innerHTML = '<p class="error-text">ERROR LOADING SYSTEM...</p>';
+        }
+      }
+
+      // --- NEW FUNCTIONS FOR VIEW SWITCHING ---
+
+      function openGame(event, gameUrl) {
+        event.preventDefault(); // Stops the browser from leaving the page
+
+        // Hide menu, show game (Using 'flex' here instead of 'block' to match our updated CSS!)
+        document.getElementById('menu-view').style.display = 'none';
+        document.getElementById('game-view').style.display = 'flex';
+
+        const iframe = document.getElementById('game-frame');
+
+        // When the iframe finishes loading the game's HTML, force the focus inside it
+        iframe.onload = function () {
+          // Focuses the actual window inside the frame so keyboard events are captured
+          iframe.contentWindow.focus();
+        };
+
+        // Load the game into the iframe
+        iframe.src = gameUrl;
+
+        // Also try focusing the iframe element itself immediately
+        iframe.focus();
+
+        // Scroll to the top of the container
+        window.scrollTo(0, 0);
+      }
+
+      function closeGame() {
+        // Hide game, show menu
+        document.getElementById('game-view').style.display = 'none';
+        document.getElementById('menu-view').style.display = 'block';
+
+        // Clear the iframe source so the game stops running/playing audio in the background
+        document.getElementById('game-frame').src = '';
+      }
+
+      // Initialize the catalog
+      loadGames();
+    </script>
+  </body>
+</html>
