@@ -61,30 +61,35 @@
       // --- NEW FUNCTIONS FOR VIEW SWITCHING ---
 
       function openGame(event, gameUrl) {
-        event.preventDefault(); // Stops the browser from leaving the page
-
-        // Hide menu, show game (Using 'flex' here instead of 'block' to match our updated CSS!)
+        event.preventDefault(); 
+        
         document.getElementById('menu-view').style.display = 'none';
         document.getElementById('game-view').style.display = 'flex';
-
+        
         const iframe = document.getElementById('game-frame');
+        
+        iframe.onload = function() {
+            // 1. Focus the game so keyboard inputs work
+            iframe.contentWindow.focus();
 
-        // When the iframe finishes loading the game's HTML, force the focus inside it
-        iframe.onload = function () {
-          // Focuses the actual window inside the frame so keyboard events are captured
-          iframe.contentWindow.focus();
+            // 2. Attach idle tracking to the inside of the iframe!
+            // Note: This only works if your HTML files are hosted on the same domain/server (No cross-origin restrictions)
+            try {
+              activityEvents.forEach(event => {
+                iframe.contentDocument.addEventListener(event, resetIdleTimer, true);
+              });
+            } catch (e) {
+              console.warn("Could not attach idle tracker to iframe due to cross-origin security.", e);
+            }
         };
 
-        // Load the game into the iframe
         iframe.src = gameUrl;
-
-        // Also try focusing the iframe element itself immediately
         iframe.focus();
-
-        // Scroll to the top of the container
         window.scrollTo(0, 0);
+        
+        // Reset timer just in case clicking the game took a second
+        resetIdleTimer();
       }
-
       function closeGame() {
         // Hide game, show menu
         document.getElementById('game-view').style.display = 'none';
@@ -96,6 +101,28 @@
 
       // Initialize the catalog
       loadGames();
+
+      // --- IDLE AUTO-RELOAD (ATTRACT MODE) ---
+      let idleTimer;
+      const IDLE_TIMEOUT = 300000; // 10 seconds in milliseconds
+
+      function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          // Reloads the entire page, resetting everything
+          window.location.reload();
+        }, IDLE_TIMEOUT);
+      }
+
+      // Track activity on the main page
+      const activityEvents = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+      activityEvents.forEach(event => {
+        // We use 'true' for the capture phase to catch events as early as possible
+        window.addEventListener(event, resetIdleTimer, true);
+      });
+
+      // Start the timer as soon as the page loads
+      resetIdleTimer();
     </script>
   </body>
 </html>
