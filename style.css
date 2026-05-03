@@ -33,7 +33,7 @@ header {
 }
 
 h1.glow-title {
-  font-family: 'Press Start 2P', cursive;
+  font-family: 'Press Start 2P', DotGothic16;
   font-size: 28px;
   color: #ffcc00; /* Arcade Yellow */
   text-shadow: 3px 3px 0 #ff0000, 0 0 15px rgba(255, 204, 0, 0.6);
